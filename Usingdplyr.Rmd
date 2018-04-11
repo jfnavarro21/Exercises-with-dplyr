@@ -1,0 +1,162 @@
+---
+title: "DataCamp Data Manipulation in R"
+author: "John Navarro"
+date: "April 10, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#1. Intro to dplyr and tbl
+```{r}
+# Load the dplyr package
+library(dplyr)
+
+# Load the hflights package
+library(hflights)
+
+# Call both head() and summary() on hflightsh
+head(hflights)
+summary(hflights)
+```
+convert data.frame to tbl
+```{r}
+# Both the dplyr and hflights packages are loaded
+
+# Convert data.frame hflights to tbl hflights
+hflights<-tbl_df(hflights)
+
+# Display head of tbl hflights
+
+print(hflights)
+
+# save column - UniqueCarrier as object named carriers
+carriers<-hflights$UniqueCarrier
+```
+Changing labels of hflights part 1
+```{r}
+# Both the dplyr and hflights packages are loaded into workspace
+lut <- c("AA" = "American", "AS" = "Alaska", "B6" = "JetBlue", "CO" = "Continental", 
+         "DL" = "Delta", "OO" = "SkyWest", "UA" = "United", "US" = "US_Airways", 
+         "WN" = "Southwest", "EV" = "Atlantic_Southeast", "F9" = "Frontier", 
+         "FL" = "AirTran", "MQ" = "American_Eagle", "XE" = "ExpressJet", "YV" = "Mesa")
+
+# Add new column (Carrier) to hflights by combining lut with UniqueCarrier
+hflights$Carrier<- lut[hflights$UniqueCarrier]
+
+# Used glimpse()
+glimpse(hflights)
+```
+changing labels of hflights part 2
+```{r}
+# examine codes in CancellationCode
+unique(hflights$CancellationCode)
+
+# the lookup table
+lut <- c("A"="carrier", "B"="weather","C"="FFA","D"="security","E"="not cancelled")
+
+# create a new vector Code, that contains the relabeled cancellation codes
+hflights$Code <- lut[hflights$CancellationCode]
+
+# check that column was added
+glimpse(hflights)
+```
+
+# 2. select and mutate
+
+Select(subsets by column), mutate(adds column), (variables)
+filter(subsets by row), arrange(reorders)  (observations)
+summarise( reduce by aggregating statistics) (groups)
+
+```{r}
+h1 <- filter(hflights, Carrier=="American")
+#summarise(h1, mean)
+```
+
+The select verb
+```{r}
+# use select to print a tbl that only contains 4 columns
+select(hflights, ActualElapsedTime, AirTime, ArrDelay, DepDelay)
+
+# print a tbl with columns Origin up to and including Cancelled of hflights
+select(hflights, 14:19)
+
+# select columns YEar to Day of week, and ArrDelay to Diverted
+select(hflights, 1:4,12:21)
+```
+Helper functions for variable selection
+```{r}
+# use contains helper function to print 2 columns
+select(hflights, contains("Delay"))
+
+# print out 5 columns
+select(hflights,UniqueCarrier, ends_with("Num"), contains("Cancel"))
+
+# print out 6 columns
+select(hflights, ends_with("Time"), ends_with("Delay"))
+```
+Comparison to base R
+```{r}
+ex1r <- hflights[c("TaxiIn","TaxiOut","Distance")]
+ex1d <- select(hflights, starts_with("Taxi"), Distance)
+
+ex2r <- hflights[c("Year", "Month","DayOfWeek","DepTime","ArrTime")]
+ex2d <- select(hflights, 1,2,4, ends_with("Time"))
+
+ex3r <- hflights[c("TailNum","TaxiIn","TaxiOut")]
+ex3d <- select(hflights, TailNum, starts_with("Taxi"))
+```
+2nd verb mutate
+```{r}
+# create a new df g1, with new col Actual GroundTime
+g1 <- mutate(hflights, ActualGroundTime= ActualElapsedTime - AirTime)
+
+# add another colunn groundTime
+g2 <- mutate(g1, GroundTime= TaxiIn+TaxiOut)
+
+# add another variable named AverageSpeed
+g3 <- mutate(g2, Distance/AirTime *60)
+
+# print
+print(g3)
+
+```
+Add multiple variables using mutate
+```{r}
+# add column loss and loss_ratio to m1
+m1 <- mutate(hflights, loss=ArrDelay - DepDelay, loss_ratio = loss/DepDelay)
+
+# create m2 , add 3 variables
+m2 <- mutate(hflights, TotalTaxi = TaxiIn +TaxiOut, ActualGroundTime = ActualElapsedTime - AirTime, Diff = TotalTaxi - ActualGroundTime)
+
+unique(select(m2,Diff))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
