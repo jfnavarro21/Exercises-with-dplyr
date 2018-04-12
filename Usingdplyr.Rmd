@@ -132,6 +132,20 @@ m2 <- mutate(hflights, TotalTaxi = TaxiIn +TaxiOut, ActualGroundTime = ActualEla
 
 unique(select(m2,Diff))
 ```
+3rd verb Filter
+```{r}
+# print the column names of tbl
+names(hflights)
+
+# print out the flights that travelled a distance of 3k miles or more
+filter(hflights, Distance>=3000 )
+
+# print out the flights by 3 airlines
+filter(hflights, Carrier == c("JetBlue","Southwest","Delta"))
+
+# extract flights where taxiing took longer than flight
+filter(hflights, (TaxiIn + TaxiOut)>AirTime)
+```
 
 
 
