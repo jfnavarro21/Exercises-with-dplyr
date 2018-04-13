@@ -37,13 +37,13 @@ carriers<-hflights$UniqueCarrier
 Changing labels of hflights part 1
 ```{r}
 # Both the dplyr and hflights packages are loaded into workspace
-lut <- c("AA" = "American", "AS" = "Alaska", "B6" = "JetBlue", "CO" = "Continental", 
+#lut <- c("AA" = "American", "AS" = "Alaska", "B6" = "JetBlue", "CO" = "Continental", 
          "DL" = "Delta", "OO" = "SkyWest", "UA" = "United", "US" = "US_Airways", 
          "WN" = "Southwest", "EV" = "Atlantic_Southeast", "F9" = "Frontier", 
          "FL" = "AirTran", "MQ" = "American_Eagle", "XE" = "ExpressJet", "YV" = "Mesa")
 
 # Add new column (Carrier) to hflights by combining lut with UniqueCarrier
-hflights$Carrier<- lut[hflights$UniqueCarrier]
+#hflights$Carrier<- lut[hflights$UniqueCarrier]
 
 # Used glimpse()
 glimpse(hflights)
@@ -54,10 +54,10 @@ changing labels of hflights part 2
 unique(hflights$CancellationCode)
 
 # the lookup table
-lut <- c("A"="carrier", "B"="weather","C"="FFA","D"="security","E"="not cancelled")
+#lut <- c("A"="carrier", "B"="weather","C"="FFA","D"="security","E"="not cancelled")
 
 # create a new vector Code, that contains the relabeled cancellation codes
-hflights$Code <- lut[hflights$CancellationCode]
+#hflights$Code <- lut[hflights$CancellationCode]
 
 # check that column was added
 glimpse(hflights)
@@ -146,10 +146,100 @@ filter(hflights, Carrier == c("JetBlue","Southwest","Delta"))
 # extract flights where taxiing took longer than flight
 filter(hflights, (TaxiIn + TaxiOut)>AirTime)
 ```
+Combining tests using Boolean operators
+```{r}
+# select the rows where a flight left before 5am or after 10p
+filter(hflights, DepTime < 500 | ArrTime >2200)
 
+# Print out all flights that departed late but arrived ahead of scheduel
+filter(hflights, DepDelay >0 & ArrDelay<0)
 
+# find all the flights that were cancelled after being delayed
+filter(hflights, Cancelled ==1 & DepDelay>0)
+```
+Combine use of first three verbs
+```{r}
+# First use filter to select flights that had JFK as destination
+c1 <- filter(hflights, Dest == "JFK")
 
+# Add a new column named date, 
+c2 <- mutate(c1, Date = paste(Year, Month, DayofMonth, sep='-'))
 
+# select columns to provide an overview
+select(c2, Date, DepTime, ArrTime, TailNum)
+
+```
+
+Fourth verb, arrange, arranges by values in a column
+```{r}
+# define dtc
+dtc <- filter(hflights, Cancelled == 1, !is.na(DepDelay))
+
+# arrange dtc by departure delays
+arrange(dtc, DepDelay)
+
+# arrange so that cancellation codes are grouped
+arrange(dtc, CancellationCode)
+
+# arrange by carrier, tiebreaker is dep delay
+arrange(dtc, Carrier, DepDelay)
+```
+Reversing the order of arranging
+```{r}
+# arrange hflights by carrier and reverse dep delay
+arrange(hflights, Carrier, desc(DepDelay))
+
+# arrange flights in hflights by their total delay
+arrange(hflights, DepDelay + ArrDelay)
+```
+Recap on the first 4 verbs
+
+```{r}
+# print only the Tail Num of hflights for flights that departed too late and sorted by total taxi time
+c1 <- filter(hflights, DepDelay>0)
+c2 <- mutate(c1, TotalTaxi = TaxiIn+TaxiOut)
+c3 <- arrange(c2, TotalTaxi)
+select(c3, TailNum)
+
+# In one line
+select(arrange(mutate(filter(hflights, DepDelay>0), TotalTaxi = TaxiIn + TaxiOut), TotalTaxi), TailNum)
+```
+
+5th verb Summarise - does NOT return an altered copy of the tbl
+```{r}
+# use summarise, min dist and max dist
+summarise(hflights, min_dist = min(Distance), max_dist = max(Distance))
+
+# print out a summary with variable max_div
+summarise(filter(hflights, Diverted ==1), max_div = max(Distance))
+```
+Aggregate functiosn
+```{r}
+# Remove ros that have NAs in the arrival delay column save to temp1
+temp1 <- filter(hflights, !is.na(ArrDelay))
+
+# print out a summary of temp1
+summarise(temp1, earliest = min(ArrDelay), average = mean(ArrDelay),
+          latest = max(ArrDelay), sd = sd(ArrDelay))
+
+# filter out NA in TaxiInand TaxiOUt, save to temp2
+temp2 <- filter(temp1, !is.na(TaxiIn) & !is.na(TaxiOut))
+
+# Print out a summary of temp2
+summarise(temp2, max_taxi_diff = max(abs(TaxiIn - TaxiOut)))
+```
+
+dplyr aggregate functions
+```{r}
+# print out a summary of hflights
+summarise(hflights, n_obs= n(), n_carrier=n_distinct(Carrier), n_dest=n_distinct(Dest))
+
+# create aa
+aa <- filter(hflights, Carrier == "American")
+
+# print out a summary of aa
+summarise(aa, n_flights=n(), n_canc=sum(Cancelled ==1), avg_delay=mean(ArrDelay, na.rm=TRUE))
+```
 
 
 
