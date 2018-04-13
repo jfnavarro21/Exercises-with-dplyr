@@ -132,7 +132,7 @@ m2 <- mutate(hflights, TotalTaxi = TaxiIn +TaxiOut, ActualGroundTime = ActualEla
 
 unique(select(m2,Diff))
 ```
-3rd verb Filter
+#3. 3rd verb Filter
 ```{r}
 # print the column names of tbl
 names(hflights)
@@ -205,7 +205,7 @@ select(c3, TailNum)
 select(arrange(mutate(filter(hflights, DepDelay>0), TotalTaxi = TaxiIn + TaxiOut), TotalTaxi), TailNum)
 ```
 
-5th verb Summarise - does NOT return an altered copy of the tbl
+#4. 5th verb Summarise - does NOT return an altered copy of the tbl
 ```{r}
 # use summarise, min dist and max dist
 summarise(hflights, min_dist = min(Distance), max_dist = max(Distance))
@@ -241,7 +241,52 @@ aa <- filter(hflights, Carrier == "American")
 summarise(aa, n_flights=n(), n_canc=sum(Cancelled ==1), avg_delay=mean(ArrDelay, na.rm=TRUE))
 ```
 
+Using pipe operator to string together commands
 
+```{r}
+# write a piped version
+hflights%>%mutate(diff = TaxiOut - TaxiIn)%>%filter(!is.na(diff))%>%summarise(avg=mean(diff))
+```
+
+Drive of Fly? Part 1 of 2
+```{r}
+# use pipe to chaing together dplyr verbs to compare avg air velocity to avg car velocity
+hflights%>%mutate(RealTime=100+ActualElapsedTime, mph=Distance/RealTime * 60)%>%
+  filter(!is.na(mph) & mph<70)%>%
+  summarise(n_less=n(), n_dest=n_distinct(Dest), min_dist=min(Distance), max_dist=max(Distance))
+# These are the flights that travel slowly (less than 70mph)
+```
+Drive or fly part 2
+```{r}
+# Determine which flights are slower than 105 mph
+hflights%>%mutate(RealTime=100+ActualElapsedTime, mph=Distance/RealTime * 60)%>%
+  filter(mph<105 |Cancelled==1|Diverted==1)%>%
+  summarise(n_non = n(),
+            n_dest=n_distinct(Dest),
+            min_dist=min(Distance),
+            max_dist=max(Distance))
+```
+Another piping exercise - How many flights were overnight flights
+```{r}
+hflights%>%filter(!is.na(DepTime), !is.na(ArrTime), DepTime > ArrTime)%>%
+  summarise(num=n())
+```
+# 5. Using Group by 
+
+Use group by and summarise together. Automatically adds column containing variable grouped by
+
+```{r}
+# Make an ordered per-carrier summary of hflights
+hflights%>%
+  group_by(UniqueCarrier)%>%
+  summarise(p_canc= mean(Cancelled==1) * 100, avg_delay=mean(ArrDelay, na.rm=TRUE))%>%
+  arrange(avg_delay, p_canc)
+```
+Combine group by with mutate
+
+```{r}
+
+```
 
 
 
